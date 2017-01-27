@@ -15,6 +15,7 @@
 # limitations under the License.
 #
 import webapp2
+import cgi
 
 class MainHandler(webapp2.RequestHandler):	
 	def get(self):
@@ -27,7 +28,7 @@ class MainHandler(webapp2.RequestHandler):
 				<body>
 					<h1>Register a user account</h1>
 					<p>(&#42; = required field)</p>
-					<form method="post" action="/">
+					<form method="post" action="/submit">
 						<div class="form-field">
 							<label for="user">Username&#42;</label>
 							<input type="text" id="user" name="username" required />
@@ -42,7 +43,7 @@ class MainHandler(webapp2.RequestHandler):
 						</div>
 						<div class="form-field">
 							<label for="pass-confirm">Confirm Password&#42;</label>
-							<input type="password" id="pass-confirm" name="password" required />
+							<input type="password" id="pass-confirm" name="password-confirm" required />
 						</div>
 						<div class="form-field">
 							<input type="submit" />
@@ -54,9 +55,40 @@ class MainHandler(webapp2.RequestHandler):
 		
 		self.response.write(page_content)
 		
+class RegisterUser(webapp2.RequestHandler):
+	def user_input_is_valid(self, data):
+		# TODO: check username for invalid characters (e.g.: @, &, whitespace, tab)
+		if data["password"] != data["password-confirm"]:
+			return False
+		
+		return True
+	
 	def post(self):
-		self.redirect('/')
+		page_content2 = """
+			<html>
+				<head>
+					<title>User Signup</title>
+					<link rel="stylesheet" href="css/style.css" type="text/css" />
+				</head>
+				<body>
+					<p>Your account has been registered successfully!</p>
+				</body>
+			</html>
+		"""
+		user_data = {
+			'username': cgi.escape(self.request.get("username")),
+			'email': cgi.escape(self.request.get("email")),
+			'password': cgi.escape(self.request.get("password")),
+			'password-confirm': cgi.escape(self.request.get("password-confirm"))
+		}
+		
+		if self.user_input_is_valid(user_data):
+			self.response.write(page_content2)
+		else:
+			# TODO: check for specific errors and display the appropriate messages on the home page
+			self.redirect('/')
 
 app = webapp2.WSGIApplication([
-	('/', MainHandler)
+	('/', MainHandler),
+	('/submit', RegisterUser)
 ], debug=True)
