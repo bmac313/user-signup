@@ -14,15 +14,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+
+# ISSUES:
+# - Unexpected behavior on submission of username containing the hash symbol ('#')
+#   This is because browsers read everything behind the hash as a URL fragment,
+#   and escaping the text doesn't solve the problem.
+
 import webapp2
 import cgi
+import re
 
 class MainHandler(webapp2.RequestHandler):	
 	def get(self):
-		error_user = ""
-		error_email = ""
-		error_pass = ""
-		error_pass_confirm = ""
+		username_input = self.request.get("username_input")
+		email_input = self.request.get("email_input")
+		error_user = self.request.get("err_invalid_username")
+		error_email = self.request.get("err_invalid_email")
+		error_pass_invalid = self.request.get("err_pass_invalid")
+		error_pass_mismatch = self.request.get("err_pass_mismatch")
 		
 		page_content = """
 			<html>
@@ -36,23 +45,23 @@ class MainHandler(webapp2.RequestHandler):
 					<form method="post" action="/submit">
 						<div class="form-field">
 							<label for="user">Username&#42;</label>
-							<input type="text" id="user" name="username" required />
-							<p class="error-msg">{0}</p>
+							<input type="text" id="user" name="username" value="{0}" required />
+							<span class="error-msg">{1}</span>
 						</div>	
 						<div class="form-field">
 							<label for="mail">Email</label>
-							<input type="email" id="mail" name="email" />
-							<p class="error-msg">{1}</p>
+							<input type="email" id="mail" name="email" value="{2}" />
+							<span class="error-msg">{3}</span>
 						</div>
 						<div class="form-field">
 							<label for="pass">Password&#42;</label>
 							<input type="password" id="pass" name="password" required />
-							<p class="error-msg">{2}</p>
+							<span class="error-msg">{4}</span>
 						</div>
 						<div class="form-field">
 							<label for="pass-confirm">Confirm Password&#42;</label>
 							<input type="password" id="pass-confirm" name="password-confirm" required />
-							<p class="error-msg">{3}</p>
+							<span class="error-msg">{5}</span>
 						</div>
 						<div class="form-field">
 							<input type="submit" />
@@ -60,17 +69,36 @@ class MainHandler(webapp2.RequestHandler):
 					</form>
 				</body>
 			</html>
-		""".format(error_user, error_email, error_pass, error_pass_confirm)
+		""".format(username_input, error_user, email_input, error_email, error_pass_invalid, error_pass_mismatch)
 		
 		self.response.write(page_content)
 		
 class RegisterUser(webapp2.RequestHandler):
 	def user_input_is_valid(self, data):
-		# TODO: check username for invalid characters (e.g.: @, &, whitespace, tab)
-		if data["password"] != data["password-confirm"]:
-			return False
+		# Initialize return values
+		username_valid, email_valid, password_valid, passwords_match = (True, True, True, True)
+		username_regex = re.compile(r"^[a-zA-Z0-9_-]{3,20}$")
+		email_regex = re.compile(r"^[\S]+@[\S]+.[\S]+$")
+		password_regex = re.compile(r"^.{3,20}$")
+
+		#Check if username is valid (between 3 and 20 characters, doesn't contain characters other than letters, digits, or underscores)
+		if not username_regex.match(data["username"]):
+			username_valid = False
 		
-		return True
+		#Check if email is valid (is in correct format), but only if the user entered one
+		if data["email"] != "":
+			if not email_regex.match(data["email"]):
+				email_valid = False
+		
+		# Check if the password is valid (between 3 and 20 characters)
+		if not password_regex.match(data["password"]):
+			password_valid = False
+		
+		# Check if passwords match
+		if data["password"] != data["password-confirm"]:
+			passwords_match = False
+		
+		return (username_valid, email_valid, password_valid, passwords_match)
 	
 	def post(self):
 		user_data = {
@@ -92,11 +120,23 @@ class RegisterUser(webapp2.RequestHandler):
 			</html>
 		""".format(user_data["username"])
 		
-		if self.user_input_is_valid(user_data):
+		user_valid, email_valid, pass_valid, pass_match = self.user_input_is_valid(user_data)
+		username_input, mail_input = (user_data["username"], user_data["email"])
+		err_invalid_username, err_invalid_email, err_pass_mismatch, err_pass_invalid = ("", "", "", "")
+		
+		if user_valid and email_valid and pass_valid and pass_match:
 			self.response.write(page_content2)
 		else:
-			# TODO: check for specific errors and display the appropriate messages on the home page
-			self.redirect('/')
+			if user_valid == False:
+				err_invalid_username = "Usernames must be between 3 and 20 characters long, and must only contain letters, numbers, or underscores"
+			if email_valid == False:
+				err_invalid_email = "The email address you entered is not valid."
+			if pass_valid == False:
+				err_pass_invalid = "A password must be between 3 and 20 characters long."
+			if pass_match == False:
+				err_pass_mismatch = "The passwords you entered do not match. Please try again."
+		
+			self.redirect('/?username_input=' + username_input + '&email_input=' + mail_input + '&err_invalid_username=' + err_invalid_username + '&err_invalid_email=' + err_invalid_email + '&err_pass_invalid=' + err_pass_invalid + '&err_pass_mismatch=' + err_pass_mismatch)
 
 app = webapp2.WSGIApplication([
 	('/', MainHandler),
