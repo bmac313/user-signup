@@ -40,32 +40,34 @@ class MainHandler(webapp2.RequestHandler):
 					<link rel="stylesheet" href="css/style.css" type="text/css" />
 				</head>
 				<body>
-					<h1>Register a user account</h1>
+					<h1><a href="/">Register a user account</a></h1>
 					<p>(&#42; = required field)</p>
 					<form method="post" action="/submit">
-						<div class="form-field">
-							<label for="user">Username&#42;</label>
-							<input type="text" id="user" name="username" value="{0}" required />
-							<span class="error-msg">{1}</span>
-						</div>	
-						<div class="form-field">
-							<label for="mail">Email</label>
-							<input type="email" id="mail" name="email" value="{2}" />
-							<span class="error-msg">{3}</span>
-						</div>
-						<div class="form-field">
-							<label for="pass">Password&#42;</label>
-							<input type="password" id="pass" name="password" required />
-							<span class="error-msg">{4}</span>
-						</div>
-						<div class="form-field">
-							<label for="pass-confirm">Confirm Password&#42;</label>
-							<input type="password" id="pass-confirm" name="password-confirm" required />
-							<span class="error-msg">{5}</span>
-						</div>
-						<div class="form-field">
-							<input type="submit" />
-						</div>
+						<div class="form-content">
+							<div class="form-field">
+								<label for="user">Username&#42;</label>
+								<input type="text" id="user" name="username" value="{0}" required /><br />
+								<span class="error-msg">{1}</span>
+							</div>	
+							<div class="form-field">
+								<label for="mail">Email</label>
+								<input type="email" id="mail" name="email" value="{2}" /><br />
+								<span class="error-msg">{3}</span>
+							</div>
+							<div class="form-field">
+								<label for="pass">Password&#42;</label>
+								<input type="password" id="pass" name="password" required /><br />
+								<span class="error-msg">{4}</span>
+							</div>
+							<div class="form-field">
+								<label for="pass-confirm">Confirm Password&#42;</label>
+								<input type="password" id="pass-confirm" name="password-confirm" required /><br />
+								<span class="error-msg">{5}</span>
+							</div>
+							<div class="form-field">
+								<input type="submit" />
+							</div>
+						<div>
 					</form>
 				</body>
 			</html>
