@@ -15,14 +15,10 @@
 # limitations under the License.
 #
 
-# ISSUES:
-# - Unexpected behavior on submission of username containing the hash symbol ('#')
-#   This is because browsers read everything behind the hash as a URL fragment,
-#   and escaping the text doesn't solve the problem.
-
 import webapp2
 import cgi
 import re
+import urllib
 
 class MainHandler(webapp2.RequestHandler):	
 	def get(self):
@@ -80,7 +76,7 @@ class RegisterUser(webapp2.RequestHandler):
 		# Initialize return values
 		username_valid, email_valid, password_valid, passwords_match = (True, True, True, True)
 		username_regex = re.compile(r"^[a-zA-Z0-9_-]{3,20}$")
-		email_regex = re.compile(r"^[\S]+@[\S]+.[\S]+$")
+		email_regex = re.compile(r"^[\S]+@[\S]+\.[\S]+$")
 		password_regex = re.compile(r"^.{3,20}$")
 
 		#Check if username is valid (between 3 and 20 characters, doesn't contain characters other than letters, digits, or underscores)
@@ -130,7 +126,7 @@ class RegisterUser(webapp2.RequestHandler):
 			self.response.write(page_content2)
 		else:
 			if user_valid == False:
-				err_invalid_username = "Usernames must be between 3 and 20 characters long, and must only contain letters, numbers, or underscores"
+				err_invalid_username = "Usernames must be between 3 and 20 characters long, and must only contain letters, numbers, hyphens, or underscores"
 			if email_valid == False:
 				err_invalid_email = "The email address you entered is not valid."
 			if pass_valid == False:
@@ -138,7 +134,7 @@ class RegisterUser(webapp2.RequestHandler):
 			if pass_match == False:
 				err_pass_mismatch = "The passwords you entered do not match. Please try again."
 		
-			self.redirect('/?username_input=' + username_input + '&email_input=' + mail_input + '&err_invalid_username=' + err_invalid_username + '&err_invalid_email=' + err_invalid_email + '&err_pass_invalid=' + err_pass_invalid + '&err_pass_mismatch=' + err_pass_mismatch)
+			self.redirect('/?username_input=' + urllib.quote(username_input) + '&email_input=' + urllib.quote(mail_input) + '&err_invalid_username=' + err_invalid_username + '&err_invalid_email=' + err_invalid_email + '&err_pass_invalid=' + err_pass_invalid + '&err_pass_mismatch=' + err_pass_mismatch)
 
 app = webapp2.WSGIApplication([
 	('/', MainHandler),
